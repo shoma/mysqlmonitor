@@ -17,6 +17,7 @@ __author__ = 'Shoma Suzuki'
 __license__ = 'MIT'
 __copyright__ = 'Copyright 2012 Shoma Suzuki'
 
+
 import logging
 if not os.path.isdir("logs"):
     os.mkdir("logs")
@@ -223,6 +224,7 @@ class IntractiveMode(MySQLStatus):
     def run(self):
         self.screen = curses.initscr()
         self.screen.nodelay(1)
+        (self.screen_max_x, self.screen_max_y) = self.screen.getmaxyx()
         curses.noecho()
         curses.cbreak()
 
@@ -260,11 +262,16 @@ class IntractiveMode(MySQLStatus):
     def show_update_status(self):
         status = self.qthread.mysql_status
         self.qthread.update = False
-        x = 3
+        x = 2
         for k in self.keywords:
             data = "%-25s: %12s" % (k, status.get(k))
-            self.screen.addstr(x, 0, data)
+            if x +1 < self.screen_max_x:
+                self.screen.addstr(x, 0, data)
+
             x = x + 1
+        if len(self.keywords)+1 > self.screen_max_x:
+            omits = len(self.keywords)+1 - self.screen_max_x
+            self.screen.addstr(self.screen_max_x -1, 0, "[%d items were truncated.]" % omits)
 
     def cleanup(self):
         self.screen.erase()
