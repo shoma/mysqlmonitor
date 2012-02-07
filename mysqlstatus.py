@@ -18,15 +18,6 @@ __license__ = 'MIT'
 __copyright__ = 'Copyright 2012 Shoma Suzuki'
 
 
-import logging
-if not os.path.isdir("logs"):
-    os.mkdir("logs")
-logging.basicConfig(
-    format='%(asctime)s - %(message)s in %(funcName)s() at %(filename)s : %(lineno)s',
-    level=logging.DEBUG,
-    filename="logs/debug.log",
-    filemode='w',
-)
 
 
 def get_args_parser():
@@ -65,6 +56,10 @@ def get_args_parser():
         default=False,
         action='store_true',
         help="Non-interactive.")
+    parser.add_argument("--debug",
+        default=False,
+        action='store_true',
+        help="Debug log enable.")
     parser.add_argument("--help",
         default=False,
         action='store_true',
@@ -106,8 +101,8 @@ class QueryThread(threading.Thread):
             self.cursor.execute(sql)
             result = self.cursor.fetchall()
             self.lock.release()
-        except Exception, e:
-            logging.error(e)
+        except Exception, err:
+            logging.exception(err)
         return dict(result)
 
     def get_variables(self):
@@ -116,6 +111,7 @@ class QueryThread(threading.Thread):
             return self.mysql_variables
         result = self.query("SHOW VARIABLES")
         self.mysql_variables = result
+        logging.debug(self.mysql_variables)
         return self.mysql_variables
 
     def get_status(self):
@@ -210,6 +206,7 @@ class MySQLStatus:
                 port=self.options.port,
                 passwd=self.options.password)
         except Exception, err:
+            logging.exception(err)
             print err
             sys.exit()
 
@@ -233,6 +230,7 @@ class IntractiveMode(MySQLStatus):
         except (KeyboardInterrupt, SystemExit):
             self.cleanup()
         except Exception, err:
+            logging.exception(err)
             self.cleanup()
             print err
         finally:
@@ -312,6 +310,7 @@ class CliMode(MySQLStatus):
         except (KeyboardInterrupt, SystemExit):
             self.cleanup()
         except Exception, err:
+            logging.exception(err)
             self.cleanup()
             print err
         finally:
@@ -339,6 +338,18 @@ if __name__ == '__main__':
     if options.help:
         parser.print_help()
         parser.exit()
+
+    if options.debug:
+        import logging
+        if not os.path.isdir("logs"):
+            os.mkdir("logs")
+        logging.basicConfig(
+            format='%(asctime)s - %(message)s in %(funcName)s() at %(filename)s : %(lineno)s',
+            level=logging.DEBUG,
+            filename="logs/debug.log",
+            filemode='w',
+        )
+        logging.debug(options)
 
     if(options.nonint):
         monitor = CliMode(options)

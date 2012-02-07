@@ -3,7 +3,7 @@ MySQL Monitor
 
 MySQL Monitor is a command set to monitoring MySQL server status.
 
-requirements
+REQUIREMENTS
 ------------
 
  - python2.7
@@ -35,8 +35,9 @@ see `MySQL :: MySQL 5.1 Reference Manual :: 12.7.5.37 SHOW STATUS Syntax <http:/
       -o [OUTFILE], --outfile [OUTFILE]
                             Output result file. avairable for non-interactive.
       -n, --nonint          Non-interactive.
+      --debug               Debug log enable.
       --help                show this help message and exit.
 
-License
+LICENSE
 -------
 MIT LICENSE
