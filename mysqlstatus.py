@@ -222,9 +222,9 @@ class MySQLStatus:
 
 class IntractiveMode(MySQLStatus):
     def run(self):
-        self.screen = curses.initscr()
-        self.screen.nodelay(1)
-        (self.screen_max_x, self.screen_max_y) = self.screen.getmaxyx()
+        self.window = curses.initscr()
+        self.window.nodelay(1)
+        (self.window_max_x, self.window_max_y) = self.window.getmaxyx()
         curses.noecho()
         curses.cbreak()
 
@@ -241,9 +241,12 @@ class IntractiveMode(MySQLStatus):
     def mainloop(self):
         self.show_header()
         while True:
-            c = self.screen.getch()
+            c = self.window.getch()
             if c == ord('q'):
                 break
+            elif c == ord('h') or c == ord('?'):
+                self.show_help()
+
             if self.qthread.update == True:
                 self.show_update_status()
             time.sleep(0.1)
@@ -256,8 +259,8 @@ class IntractiveMode(MySQLStatus):
             'mysql_version': variables.get('version'),
         }
         data = "%(hostname)s, %(currenttime)s, %(mysql_version)s" % data
-        self.screen.addstr(0, 0, data)
-        self.screen.addstr(1, 0, "-" * 70)
+        self.window.addstr(0, 0, data)
+        self.window.addstr(1, 0, "-" * 70)
 
     def show_update_status(self):
         status = self.qthread.mysql_status
@@ -265,18 +268,18 @@ class IntractiveMode(MySQLStatus):
         x = 2
         for k in self.keywords:
             data = "%-25s: %12s" % (k, status.get(k))
-            if x +1 < self.screen_max_x:
-                self.screen.addstr(x, 0, data)
+            if x +1 < self.window_max_x:
+                self.window.addstr(x, 0, data)
 
             x = x + 1
-        if len(self.keywords)+1 > self.screen_max_x:
-            omits = len(self.keywords)+1 - self.screen_max_x
-            self.screen.addstr(self.screen_max_x -1, 0, "[%d items were truncated.]" % omits)
+        if len(self.keywords)+1 > self.window_max_x:
+            omits = len(self.keywords)+1 - self.window_max_x
+            self.window.addstr(self.window_max_x -1, 0, "[%d items were truncated.]" % omits)
 
     def cleanup(self):
-        self.screen.erase()
+        self.window.erase()
         curses.nocbreak()
-        self.screen.keypad(0)
+        self.window.keypad(0)
         curses.echo()
         curses.endwin()
         self.qthread.stop = True
@@ -285,6 +288,21 @@ class IntractiveMode(MySQLStatus):
             # wait for stop QueryThread
             pass
 
+    def show_help(self):
+        help_text = """
+        h or ? show this help message
+        q      quit
+
+        [Press any key to continue]
+        """
+        self.window.erase()
+        self.window.addstr(1, 0, help_text)
+        self.window.nodelay(0)
+        self.window.getch()
+
+        self.window.erase()
+        self.window.nodelay(1)
+        self.show_header()
 
 class CliMode(MySQLStatus):
     def run(self):
