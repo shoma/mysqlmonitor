@@ -14,10 +14,12 @@ from datetime import datetime
 __title__ = 'mysqlstatus'
 __version__ = '0.1.0-DEV'
 __author__ = 'Shoma Suzuki'
-__license__ = ''
+__license__ = 'MIT'
 __copyright__ = 'Copyright 2012 Shoma Suzuki'
 
 import logging
+if not os.path.isdir("logs"):
+    os.mkdir("logs")
 logging.basicConfig(
     format='%(asctime)s - %(message)s in %(funcName)s() at %(filename)s : %(lineno)s',
     level=logging.DEBUG,
