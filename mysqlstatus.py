@@ -19,8 +19,6 @@ __license__ = 'MIT'
 __copyright__ = 'Copyright 2012 Shoma Suzuki'
 
 
-
-
 def get_args_parser():
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("-h", "--host",
@@ -156,6 +154,7 @@ class QueryThread(threading.Thread):
                 lambda x: (x.get('Variable_name'), x.get('Value')),
                 dictset))
 
+
 class MySQLStatus:
     keywords = (
         "QPS",
@@ -273,13 +272,14 @@ class IntractiveMode(MySQLStatus):
         x = 2
         for k in self.keywords:
             data = "%-25s: %12s" % (k, status.get(k))
-            if x +1 < self.window_max_x:
+            if x + 1 < self.window_max_x:
                 self.window.addstr(x, 0, data)
 
             x = x + 1
-        if len(self.keywords)+1 > self.window_max_x:
-            omits = len(self.keywords)+1 - self.window_max_x
-            self.window.addstr(self.window_max_x -1, 0, "[%d items were truncated.]" % omits)
+        if len(self.keywords) + 1 > self.window_max_x:
+            omits = len(self.keywords) + 1 - self.window_max_x
+            self.window.addstr(self.window_max_x - 1, 0,
+                "[%d items were truncated.]" % omits)
 
     def cleanup(self):
         self.window.erase()
@@ -308,6 +308,7 @@ class IntractiveMode(MySQLStatus):
         self.window.erase()
         self.window.nodelay(1)
         self.show_header()
+
 
 class CliMode(MySQLStatus):
     def run(self):
@@ -338,6 +339,7 @@ class CliMode(MySQLStatus):
         self.qthread.stop = True
         while self.qthread.isAlive():
             pass
+
 
 if __name__ == '__main__':
     parser = get_args_parser()
