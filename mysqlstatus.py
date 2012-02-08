@@ -8,6 +8,7 @@ import threading
 import MySQLdb as Database
 import time
 import curses
+import logging
 from datetime import datetime
 
 
@@ -77,7 +78,7 @@ class QueryThread(threading.Thread):
         self.mysql_last_status = None
 
         self.db = kwargs.get('db')
-        self.cursor = self.db.cursor()
+        self.cursor = self.db.cursor(Database.cursors.DictCursor)
         self.interval = kwargs.get('interval', 1)
 
         self.lock = threading.Lock()
@@ -95,7 +96,7 @@ class QueryThread(threading.Thread):
         self.cursor.close()
 
     def query(self, sql):
-        result = {}
+        result = ()
         try:
             self.lock.acquire()
             self.cursor.execute(sql)
@@ -103,14 +104,14 @@ class QueryThread(threading.Thread):
             self.lock.release()
         except Exception, err:
             logging.exception(err)
-        return dict(result)
+        return result
 
     def get_variables(self):
         """SHOW VARIABLES"""
         if self.mysql_variables is not None:
             return self.mysql_variables
         result = self.query("SHOW VARIABLES")
-        self.mysql_variables = result
+        self.mysql_variables = self.to_dict(result)
         logging.debug(self.mysql_variables)
         return self.mysql_variables
 
@@ -118,7 +119,8 @@ class QueryThread(threading.Thread):
         """ SHOW GLOBAL STATUS """
         if self.mysql_status is not None:
             self.mysql_last_status = self.mysql_status
-        self.mysql_status = self.query("SHOW GLOBAL STATUS")
+        result = self.query("SHOW GLOBAL STATUS")
+        self.mysql_status = self.to_dict(result)
         logging.debug(self.mysql_status)
         self.get_query_per_second()
         self.update = True
@@ -148,6 +150,11 @@ class QueryThread(threading.Thread):
         self.mysql_status.update({'QPS': "%0.2f" % qps})
         return qps
 
+    def to_dict(self, dictset):
+        return dict(
+            map(
+                lambda x: (x.get('Variable_name'), x.get('Value')),
+                dictset))
 
 class MySQLStatus:
     keywords = (
@@ -340,7 +347,6 @@ if __name__ == '__main__':
         parser.exit()
 
     if options.debug:
-        import logging
         if not os.path.isdir("logs"):
             os.mkdir("logs")
         logging.basicConfig(
@@ -350,6 +356,8 @@ if __name__ == '__main__':
             filemode='w',
         )
         logging.debug(options)
+    else:
+        logging.basicConfig(handler=logging.NullHandler)
 
     if(options.nonint):
         monitor = CliMode(options)
