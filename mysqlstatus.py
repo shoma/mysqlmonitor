@@ -55,6 +55,11 @@ def get_args_parser():
         default=False,
         action='store_true',
         help="Non-interactive.")
+    parser.add_argument("-m", "--mode",
+        default='status',
+        nargs='?',
+        choices=['status', 'process'],
+        help="monitoring Mode")
     parser.add_argument("--debug",
         default=False,
         action='store_true',
@@ -78,6 +83,7 @@ class QueryThread(threading.Thread):
         self.db = kwargs.get('db')
         self.cursor = self.db.cursor(Database.cursors.DictCursor)
         self.interval = kwargs.get('interval', 1)
+        self.mode = 'status'
 
         self.lock = threading.Lock()
 
@@ -86,7 +92,10 @@ class QueryThread(threading.Thread):
 
     def run(self):
         while self.stop == False:
-            self.get_status()
+            if self.mode == 'process':
+                self.get_procesesslist()
+            else:
+                self.get_status()
             time.sleep(self.interval)
         self.cleanup_mysql()
 
@@ -123,6 +132,14 @@ class QueryThread(threading.Thread):
         self.get_query_per_second()
         self.update = True
         return self.mysql_status
+
+    def get_procesesslist(self):
+        """SHOW FULL PROCESSLIST"""
+        result = self.query("SHOW FULL PROCESSLIST")
+        self.mysql_procesesslist = result
+        self.update = True
+        logging.debug(result)
+        return self.mysql_procesesslist
 
     def get_query_per_second(self):
         if self.mysql_status is None:
@@ -220,6 +237,7 @@ class MySQLStatus:
             db=db,
             interval=options.interval,
         )
+        self.qthread.mode = options.mode
         self.qthread.start()
 
 
@@ -227,7 +245,7 @@ class IntractiveMode(MySQLStatus):
     def run(self):
         self.window = curses.initscr()
         self.window.nodelay(1)
-        (self.window_max_x, self.window_max_y) = self.window.getmaxyx()
+        (self.window_max_y, self.window_max_x) = self.window.getmaxyx()
         curses.noecho()
         curses.cbreak()
 
@@ -252,7 +270,7 @@ class IntractiveMode(MySQLStatus):
                 self.show_help()
 
             if self.qthread.update == True:
-                self.show_update_status()
+                self.show_update()
             time.sleep(0.1)
 
     def show_header(self):
@@ -266,20 +284,44 @@ class IntractiveMode(MySQLStatus):
         self.window.addstr(0, 0, data)
         self.window.addstr(1, 0, "-" * 70)
 
+    def show_update(self):
+        self.qthread.update = False
+        if self.qthread.mode == 'process':
+            self.show_update_process()
+        else:
+            self.show_update_status()
+
     def show_update_status(self):
         status = self.qthread.mysql_status
-        self.qthread.update = False
-        x = 2
+        y = 2
         for k in self.keywords:
             data = "%-25s: %12s" % (k, status.get(k))
-            if x + 1 < self.window_max_x:
-                self.window.addstr(x, 0, data)
+            if y + 1 < self.window_max_y:
+                self.window.addstr(y, 0, data)
 
-            x = x + 1
-        if len(self.keywords) + 1 > self.window_max_x:
-            omits = len(self.keywords) + 1 - self.window_max_x
-            self.window.addstr(self.window_max_x - 1, 0,
+            y = y + 1
+        if len(self.keywords) + 1 > self.window_max_y:
+            omits = len(self.keywords) + 1 - self.window_max_y
+            self.window.addstr(self.window_max_y - 1, 0,
                 "[%d items were truncated.]" % omits)
+
+    def show_update_process(self):
+        """
+        Id, Host, db, User, Time, State, Type(Command), Query(Info)
+        """
+        process = self.qthread.mysql_procesesslist
+        y = 3
+        header_format = '%7s, %8s, %8s,%7s,%6s,%6s,%12s,'
+        header_item = ('Id', 'Host', 'db', 'Time', 'State', 'Type', 'Query')
+        header = header_format % header_item
+        data_format = '%(Id)7s, %(Host)8s, %(db)8s,%(Time)7s,%(State)6s,%(Command)6s,%(Info)12s,'
+        self.window.addstr(2, 0, header)
+        for item in process:
+            data = data_format % item
+            # TODO truncate if variables to display is too long.
+            if y +1 < self.window_max_y:
+                self.window.addstr(y, 0, data)
+            y = y + 1
 
     def cleanup(self):
         self.window.erase()
@@ -315,7 +357,8 @@ class CliMode(MySQLStatus):
         self.output = self.options.outfile
         try:
             self.mainloop()
-        except (KeyboardInterrupt, SystemExit):
+        except (KeyboardInterrupt, SystemExit), event:
+            logging.exception(event)
             self.cleanup()
         except Exception, err:
             logging.exception(err)
@@ -327,13 +370,24 @@ class CliMode(MySQLStatus):
     def mainloop(self):
         while True:
             if self.qthread.update == True:
-                self.show_update_status()
+                self.output_action()
                 time.sleep(0.1)
+
+    def output_action(self):
+        self.qthread.update = False
+        if self.qthread.mode == 'process':
+            self.show_update_process()
+        else:
+            self.show_update_status()
+        self.output.write("\n")
 
     def show_update_status(self):
         status = self.qthread.mysql_status
-        self.qthread.update = False
         self.output.write(str(status))
+
+    def show_update_process(self):
+        process = self.qthread.mysql_procesesslist
+        self.output.write(str(process))
 
     def cleanup(self):
         self.qthread.stop = True
