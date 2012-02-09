@@ -141,6 +141,7 @@ class QueryThread(threading.Thread):
 
     def cleanup_mysql(self):
         self._cursor.close()
+        self._db.close()
 
     def query(self, sql):
         result = ()
