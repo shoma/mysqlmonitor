@@ -73,96 +73,127 @@ def get_args_parser():
 
 class QueryThread(threading.Thread):
     def __init__(self, **kwargs):
-        self.stop = False
-        self.update = False
+        self._stop = False
+        self._update = False
 
-        self.mysql_variables = None
-        self.mysql_status = None
+        self._mysql_variables = None
+        self._mysql_status = None
         self.mysql_last_status = None
 
-        self.db = kwargs.get('db')
-        self.cursor = self.db.cursor(Database.cursors.DictCursor)
-        self.interval = kwargs.get('interval', 1)
-        self.mode = 'status'
+        self._db = kwargs.get('db')
+        self._cursor = self._db.cursor(Database.cursors.DictCursor)
+        self._interval = kwargs.get('interval', 1)
+        self._mode = 'status'
 
         self.lock = threading.Lock()
 
         threading.Thread.__init__(self)
         self.setDaemon(True)
 
+    @property
+    def mysql_variables(self):
+        """SHOW VARIABLES"""
+        if self._mysql_variables is None:
+            result = self.query("SHOW VARIABLES")
+            self._mysql_variables = self.to_dict(result)
+            logging.debug(self._mysql_variables)
+        return self._mysql_variables
+
+    @property
+    def mysql_status(self):
+        return self._mysql_status
+
+    @property
+    def mode(self):
+        return self._mode
+
+    @property
+    def update(self):
+        return self._update
+
+    @update.setter
+    def update(self, value):
+        self._update = value
+
+    @mode.setter
+    def mode(self, value):
+        if value == 'process':
+            self._mode = 'process'
+        else:
+            self._mode = 'status'
+
+    @property
+    def stop(self):
+        return self._stop
+
+    @stop.setter
+    def stop(self, value):
+        self._stop = value
+
     def run(self):
-        while self.stop == False:
-            if self.mode == 'process':
+        while self._stop == False:
+            if self._mode == 'process':
                 self.get_procesesslist()
             else:
                 self.get_status()
-            time.sleep(self.interval)
+            time.sleep(self._interval)
         self.cleanup_mysql()
 
     def cleanup_mysql(self):
-        self.cursor.close()
+        self._cursor.close()
 
     def query(self, sql):
         result = ()
         try:
             self.lock.acquire()
-            self.cursor.execute(sql)
-            result = self.cursor.fetchall()
+            self._cursor.execute(sql)
+            result = self._cursor.fetchall()
             self.lock.release()
         except Exception, err:
             logging.exception(err)
         return result
 
-    def get_variables(self):
-        """SHOW VARIABLES"""
-        if self.mysql_variables is not None:
-            return self.mysql_variables
-        result = self.query("SHOW VARIABLES")
-        self.mysql_variables = self.to_dict(result)
-        logging.debug(self.mysql_variables)
-        return self.mysql_variables
-
     def get_status(self):
         """ SHOW GLOBAL STATUS """
-        if self.mysql_status is not None:
-            self.mysql_last_status = self.mysql_status
+        if self._mysql_status is not None:
+            self.mysql_last_status = self._mysql_status
         result = self.query("SHOW GLOBAL STATUS")
-        self.mysql_status = self.to_dict(result)
-        logging.debug(self.mysql_status)
+        self._mysql_status = self.to_dict(result)
+        logging.debug(self._mysql_status)
         self.get_query_per_second()
-        self.update = True
-        return self.mysql_status
+        self._update = True
+        return self._mysql_status
 
     def get_procesesslist(self):
         """SHOW FULL PROCESSLIST"""
         result = self.query("SHOW FULL PROCESSLIST")
         self.mysql_procesesslist = result
-        self.update = True
+        self._update = True
         logging.debug(result)
         return self.mysql_procesesslist
 
     def get_query_per_second(self):
-        if self.mysql_status is None:
+        if self._mysql_status is None:
             return 0.0
         if self.mysql_last_status is not None:
             [current, last] = map(lambda x: float(x),
-                (self.mysql_status.get('Uptime'),
+                (self._mysql_status.get('Uptime'),
                  self.mysql_last_status.get('Uptime')))
             elapsed_time = last - current
 
             [current, last] = map(lambda x: float(x),
-                (self.mysql_status.get('Questions', 0),
+                (self._mysql_status.get('Questions', 0),
                 self.mysql_last_status.get('Questions', 0)))
             inc_query = last - current
         else:
             [elapsed_time, inc_query] = map(lambda x: float(x),
-                (self.mysql_status.get('Uptime', 0),
-                self.mysql_status.get('Questions', 0)))
+                (self._mysql_status.get('Uptime', 0),
+                self._mysql_status.get('Questions', 0)))
         try:
             qps = inc_query / elapsed_time
         except:
             qps = 0.0
-        self.mysql_status.update({'QPS': "%0.2f" % qps})
+        self._mysql_status.update({'QPS': "%0.2f" % qps})
         return qps
 
     def to_dict(self, dictset):
@@ -274,7 +305,7 @@ class IntractiveMode(MySQLStatus):
             time.sleep(0.1)
 
     def show_header(self):
-        variables = self.qthread.get_variables()
+        variables = self.qthread.mysql_variables
         data = {
             'hostname': variables.get('hostname'),
             'currenttime': datetime.now().isoformat(),
