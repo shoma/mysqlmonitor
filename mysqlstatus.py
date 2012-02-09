@@ -277,7 +277,7 @@ class IntractiveMode(MySQLStatus):
         logging.debug('starting IntractiveMode')
         self.window = curses.initscr()
         self.window.nodelay(1)
-        (self.window_max_y, self.window_max_x) = self.window.getmaxyx()
+        self.set_window_size()
         curses.noecho()
         curses.cbreak()
 
@@ -304,10 +304,14 @@ class IntractiveMode(MySQLStatus):
                 self.qthread.mode = 'status'
             elif c == ord('h') or c == ord('?'):
                 self.show_help()
-
+            elif c == curses.KEY_RESIZE:
+                self.set_window_size()
             if self.qthread.update == True:
                 self.show_update()
             time.sleep(0.1)
+
+    def set_window_size(self):
+        (self.window_max_y, self.window_max_x) = self.window.getmaxyx()
 
     def show_header(self):
         variables = self.qthread.mysql_variables
