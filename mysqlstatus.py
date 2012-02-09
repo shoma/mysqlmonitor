@@ -297,6 +297,10 @@ class IntractiveMode(MySQLStatus):
             c = self.window.getch()
             if c == ord('q'):
                 break
+            elif c == ord('p'):
+                self.qthread.mode = 'process'
+            elif c == ord('s'):
+                self.qthread.mode = 'status'
             elif c == ord('h') or c == ord('?'):
                 self.show_help()
 
@@ -317,6 +321,8 @@ class IntractiveMode(MySQLStatus):
 
     def show_update(self):
         self.qthread.update = False
+        self.window.erase()
+        self.show_header()
         if self.qthread.mode == 'process':
             self.show_update_process()
         else:
@@ -367,14 +373,17 @@ class IntractiveMode(MySQLStatus):
             pass
 
     def show_help(self):
-        help_text = """
-        h or ? show this help message
-        q      quit
+        """Help:
+           s : switch to status mode
+           p : switch to process mode
+           h : show this help message
+           ? : alias of help
+           q : quit
 
-        [Press any key to continue]
-        """
+           [Press any key to continue]"""
+
         self.window.erase()
-        self.window.addstr(1, 0, help_text)
+        self.window.addstr(1, 0, IntractiveMode.show_help.__doc__)
         self.window.nodelay(0)
         self.window.getch()
 
