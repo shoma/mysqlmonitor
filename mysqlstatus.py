@@ -87,7 +87,7 @@ class QueryThread(threading.Thread):
 
         self.lock = threading.Lock()
 
-        threading.Thread.__init__(self)
+        threading.Thread.__init__(self, name="QueryThread")
         self.setDaemon(True)
 
     @property
@@ -274,6 +274,7 @@ class MySQLStatus:
 
 class IntractiveMode(MySQLStatus):
     def run(self):
+        logging.debug('starting IntractiveMode')
         self.window = curses.initscr()
         self.window.nodelay(1)
         (self.window_max_y, self.window_max_x) = self.window.getmaxyx()
@@ -394,6 +395,7 @@ class IntractiveMode(MySQLStatus):
 
 class CliMode(MySQLStatus):
     def run(self):
+        logging.debug('starting CliMode')
         self.output = self.options.outfile
         try:
             self.mainloop()
@@ -446,7 +448,7 @@ if __name__ == '__main__':
         if not os.path.isdir("logs"):
             os.mkdir("logs")
         logging.basicConfig(
-            format='%(asctime)s - %(message)s in %(funcName)s() at %(filename)s : %(lineno)s',
+            format='%(asctime)s - (%(threadName)s) - %(message)s in %(funcName)s() at %(filename)s : %(lineno)s',
             level=logging.DEBUG,
             filename="logs/debug.log",
             filemode='w',
