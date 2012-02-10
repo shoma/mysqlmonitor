@@ -5,6 +5,10 @@ MySQL Monitor is a console-based (non-gui) tool for monitoring MySQL server.
 
 MySQL Monitor is inspired by `innotop <http://code.google.com/p/innotop/>`_ and `mytop <http://jeremy.zawodny.com/mysql/mytop/>`_ .
 
+STATUS
+------
+**Work in process**
+
 REQUIREMENTS
 ------------
 
