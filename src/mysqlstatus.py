@@ -314,6 +314,7 @@ class IntractiveMode(MySQLStatus):
         self.window = curses.initscr()
         self.window.nodelay(1)
         self.set_window_size()
+        curses.nl()
         curses.noecho()
         curses.cbreak()
 
@@ -353,7 +354,7 @@ class IntractiveMode(MySQLStatus):
         variables = self.qthread.mysql_variables
         data = {
             'hostname': variables.get('hostname'),
-            'currenttime': datetime.now().isoformat(),
+            'currenttime': datetime.now().strftime("%Y-%m-%d %H:%m:%S"),
             'mysql_version': variables.get('version'),
         }
         data = "%(hostname)s, %(currenttime)s, %(mysql_version)s" % data
