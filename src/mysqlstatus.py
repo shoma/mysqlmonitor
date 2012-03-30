@@ -107,12 +107,14 @@ def get_args_parser():
 
 
 class QueryThread(threading.Thread):
-    def __init__(self, **kwargs):
-        self._stop = False
-        self._update = False
+    _stop = False
+    _update = False
+    _mysql_variables = None
+    _mysql_status = None
+    _mysql_procesesslist = None
 
-        self._mysql_variables = None
-        self._mysql_status = None
+    def __init__(self, **kwargs):
+
         self.mysql_last_status = None
 
         self._db = kwargs.get('db')
@@ -165,6 +167,10 @@ class QueryThread(threading.Thread):
     def stop(self, value):
         self._stop = value
 
+    @property
+    def mysql_procesesslist(self):
+        return self._mysql_procesesslist
+
     def run(self):
         while self._stop == False:
             if self._mode == 'process':
@@ -203,10 +209,10 @@ class QueryThread(threading.Thread):
     def get_procesesslist(self):
         """SHOW FULL PROCESSLIST"""
         result = self.query("SHOW FULL PROCESSLIST")
-        self.mysql_procesesslist = result
+        self._mysql_procesesslist = result
         self._update = True
         logging.debug(result)
-        return self.mysql_procesesslist
+        return self.mysql_procesesslist()
 
     def get_query_per_second(self):
         if self._mysql_status is None:
