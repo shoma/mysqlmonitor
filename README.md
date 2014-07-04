@@ -45,6 +45,54 @@ see [MySQL :: MySQL 5.7 Reference Manual :: 13.7.5.34 SHOW STATUS Syntax](http:/
 
 ```
 
+Example of output
+-----------------
+
+```
+localhost, 2014-07-04 23:07:41, 5.6.17
+----------------------------------------------------------------------
+QPS                      :         1.00
+Aborted_connects         :            0
+Binlog_cache_disk_use    :            0
+Bytes_received           :          962
+Bytes_sent               :       251485
+Connections              :            3
+Created_tmp_disk_tables  :            0
+Created_tmp_files        :            5
+Created_tmp_tables       :           27
+Handler_delete           :            0
+Handler_read_first       :            3
+Handler_read_rnd         :            0
+Handler_read_rnd_next    :         9141
+Handler_update           :            0
+Handler_write            :         9098
+Key_read_requests        :            0
+Key_reads                :            0
+Max_used_connections     :            1
+Open_files               :           16
+Opened_table_definitions :           32
+Opened_tables            :           32
+Opened_tables            :           32
+Qcache_free_memory       :      1031336
+Qcache_hits              :            0
+Qcache_queries_in_cache  :            0
+Questions                :           30
+Select_full_join         :            0
+Select_full_range_join   :            0
+Select_range             :            0
+Select_range_check       :            0
+Select_scan              :           27
+Slave_running            :          OFF
+Slow_queries             :            0
+Sort_merge_passes        :            0
+Sort_scan                :            0
+Table_locks_immediate    :           35
+Table_locks_waited       :            0
+Threads_connected        :            1
+Threads_created          :            1
+Threads_running          :            1
+Uptime                   :         1907
+```
 LICENSE
 -------
 MIT LICENSE
