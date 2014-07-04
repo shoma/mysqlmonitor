@@ -3,30 +3,27 @@ MySQL Monitor
 
 MySQL Monitor is a console-based (non-gui) tool for monitoring MySQL server.
 
-MySQL Monitor is inspired by `innotop <http://code.google.com/p/innotop/>`_ and `mytop <http://jeremy.zawodny.com/mysql/mytop/>`_ .
+MySQL Monitor is inspired by [innotop](https://code.google.com/p/innotop/) and [mytop](http://jeremy.zawodny.com/mysql/mytop/).
 
 STATUS
 ------
-**Work in process**
+*Work in process*
 
 REQUIREMENTS
 ------------
 
- - python2.7
- - MySQLdb
+- python2.7
+- MySQLdb
 
 mysqlstaus.py
 -------------
+show status by `SHOW GLOBAL STATUS;` statement.
+see [MySQL :: MySQL 5.7 Reference Manual :: 13.7.5.34 SHOW STATUS Syntax](http://dev.mysql.com/doc/refman/5.7/en/show-status.html)
 
-show status by *SHOW GLOBAL STATUS;* statement.
-
-see `MySQL :: MySQL 5.1 Reference Manual :: 12.7.5.37 SHOW STATUS Syntax <http://dev.mysql.com/doc/refman/5.1/en/show-status.html>`_
-
-::
-
+```
     usage: mysqlstatus.py [-h [HOST]] [-p [PORT]] [-u [USER]] [-P [PASSWORD]]
                           [-i [INTERVAL]] [-o [OUTFILE]] [-n] [--help]
-    
+
     optional arguments:
       -h [HOST], --host [HOST]
                         Connect to host.
@@ -45,6 +42,8 @@ see `MySQL :: MySQL 5.1 Reference Manual :: 12.7.5.37 SHOW STATUS Syntax <http:/
                                 monitoring Mode
       --debug               Debug log enable.
       --help                show this help message and exit.
+
+```
 
 LICENSE
 -------
