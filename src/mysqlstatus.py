@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Copyright (c) 2012 Shoma Suzuki
+Copyright (c) Shoma Suzuki
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
@@ -32,23 +32,24 @@ MySQL Monitor is inspired by innotop_ and mytop_ .
 
 mysqlstaus.py shows status by *SHOW GLOBAL STATUS;* statement.
 
-see MySQL :: MySQL 5.1 Reference Manual :: 12.7.5.37 SHOW STATUS Syntax
-MySQLhttp://dev.mysql.com/doc/refman/5.1/en/show-status.html
+see MySQL :: MySQL 5.7 Reference Manual :: 12.7.5.37 SHOW STATUS Syntax
+MySQLhttp://dev.mysql.com/doc/refman/5.7/en/show-status.html
 """
 
+import argparse
+import curses
+import getpass
+import logging
 import os
 import sys
-import argparse
 import threading
-import MySQLdb as Database
 import time
-import curses
-import logging
 from datetime import datetime
 
+import MySQLdb as Database
 
 __title__ = 'mysqlstatus'
-__version__ = '0.1.0-DEV'
+__version__ = '0.2.0-DEV'
 __author__ = 'Shoma Suzuki'
 __license__ = 'MIT'
 __copyright__ = 'Copyright 2012 Shoma Suzuki'
@@ -67,7 +68,7 @@ def get_args_parser():
         type=int,
         help="Port number to use for connection.")
     parser.add_argument("-u", "--user",
-        default=None,
+        default=getpass.getuser(),
         nargs='?',
         type=str,
         help="User for login if not current user.")
@@ -292,8 +293,6 @@ class MySQLStatus:
 
     def __init__(self, options):
         self.options = options
-        if self.options.user is None:
-            self.options.user = os.getenv('USERNAME')
 
         try:
             db = Database.connect(
